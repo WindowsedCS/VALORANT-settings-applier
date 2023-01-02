@@ -1,0 +1,33 @@
+{
+  "name": "@liamcottle/valorant.js",
+  "version": "1.2.1",
+  "description": "Unofficial NodeJS library for the VALORANT APIs used in game.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/liamcottle/valorant.js.git"
+  },
+  "keywords": [
+    "valorant",
+    "api",
+    "riot",
+    "js",
+    "nodejs",
+    "competitive",
+    "match",
+    "history"
+  ],
+  "author": "Liam Cottle",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/liamcottle/valorant.js/issues"
+  },
+  "homepage": "https://github.com/liamcottle/valorant.js#readme",
+  "dependencies": {
+    "axios": "^0.21.1",
+    "axios-cookiejar-support": "^1.0.1",
+    "querystring": "^0.2.0",
+    "tough-cookie": "^4.0.0",
+    "url": "^0.11.0"
+  }
+}
