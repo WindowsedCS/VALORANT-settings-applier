@@ -3,8 +3,8 @@ const readline = require('readline');
 const VALORANT = require("./valorant.js");
 const zlib = require("zlib");
 const languageFile = require("./language.json");
-let Language = languageFile["en-US"];
-let data = {};
+let data = require("./data.json");
+let Language = languageFile[data["language"]];
 let playerName = null;
 
 //From https://stackoverflow.com/questions/9781218/how-to-change-node-jss-console-font-color
