@@ -2,6 +2,8 @@ const fs = require("fs");
 const readline = require('readline');
 const VALORANT = require("./valorant.js");
 const zlib = require("zlib");
+const languageFile = require("./language.json");
+let Language = languageFile["en-US"];
 let data = {};
 let playerName = null;
 
@@ -55,7 +57,7 @@ async function main() {
             await valorant.authorize(data["account"]["username"], data["account"]["password"]).then(async (error) => {
                 data["cookies"] = valorant.cookies;
                 if (valorant.multifactor == true) {
-                    const code = await askQuestion("Please enter your multifactor authencation code (check your email): ");
+                    const code = await askQuestion(Language["askForMfaCode"]);
                     await valorant.mfa(code);
                     data["cookies"] = valorant.cookies;
                 }
@@ -80,7 +82,7 @@ async function main() {
 
 async function askForSelection(valorant = new VALORANT.API()) {
     console.clear();
-    const option = await askQuestion(`Logged in as ${color.FgCyan}${playerName}\n${color.FgYellow}Change VALORANT account: ${color.FgGreen}1\n${color.FgYellow}Backup current settings in the account: ${color.FgGreen}2\n${color.FgYellow}Apply specify profile to current account: ${color.FgGreen}3\n${color.Reset}Please select: `);
+    const option = await askQuestion(`${Language["loggedInAs"]}${color.FgCyan}${playerName}\n${color.FgYellow}${Language["changeAccount"]}${color.FgGreen}1\n${color.FgYellow}${Language["saveSettings"]}${color.FgGreen}2\n${color.FgYellow}${Language["applySettings"]}${color.FgGreen}3\n${color.Reset}${Language["select"]}`);
     switch (option) {
         case "1":
             data["cookies"] = null;
@@ -100,7 +102,7 @@ async function askForSelection(valorant = new VALORANT.API()) {
                 await valorant.authorize(data["account"]["username"], data["account"]["password"]).then(async (error) => {
                     data["cookies"] = valorant.cookies;
                     if (valorant.multifactor == true) {
-                        const code = await askQuestion("Please enter your multifactor authencation code (check your email): ");
+                        const code = await askQuestion(Language["askForMfaCode"]);
                         await valorant.mfa(code);
                         data["cookies"] = valorant.cookies;
                     }
@@ -138,21 +140,21 @@ async function askForSelection(valorant = new VALORANT.API()) {
 }
 
 async function applySettings(profileList = [], valorant = new VALORANT.API()) {
-    const profileName = await askQuestion(`${color.FgYellow}Following profiles are available to apply\n${color.FgGreen}${profileList.join("\n")}\n${color.Reset}Please select: `);
+    const profileName = await askQuestion(`${color.FgYellow}${Language["profileAvailable"]}\n${color.FgGreen}${profileList.join("\n")}\n${color.Reset}${Language["select"]}`);
     if (fs.existsSync(`./profiles/${profileName}.json`)) {
         let profileData = fs.readFileSync(`./profiles/${profileName}.json`, "utf8");
         profileData = zlib.deflateRawSync(profileData, {windowBits: 15}).toString('base64');
         await valorant.savePreference({type: "Ares.PlayerSettings", data: profileData});
     } else {
-        console.log(`${color.Red}The profile does not exist!${color.Reset}`);
+        console.log(`${color.Red}${Language["profileNotExist"]}${color.Reset}`);
         await applySettings(profileList);
     }
 }
 
 async function nameSettings(settings) {
-    const name = await askQuestion(`${color.FgYellow}Please name this settings profile: ${color.Reset}`);
+    const name = await askQuestion(`${color.FgYellow}${Language["nameProfile"]}${color.Reset}`);
     if (fs.existsSync(`./profiles/${name}.json`)) {
-        const replace = await askQuestion(`${color.FgRed}Profile ${name} exists, are you sure you want to replace it? (y/n): ${color.Reset}`);
+        const replace = await askQuestion(`${color.FgRed}${Language["replaceWarning"].replace("{{name}}", name)}${color.Reset}`);
         if (replace.toLowerCase() == "y" || replace.toLowerCase() == "yes") {
             fs.writeFileSync(`./profiles/${name}.json`, JSON.stringify(settings, null, "\t"));
         } else {
@@ -164,8 +166,8 @@ async function nameSettings(settings) {
 }
 
 async function askForCredentials() {
-    const username = await askQuestion("Please enter your VALORANT username: ");
-    const password = await askQuestion("Please enter your VALORANT password: ");
+    const username = await askQuestion(Language["askForUsername"]);
+    const password = await askQuestion(Language["askForPassword"]);
     data["account"]["username"] = username;
     data["account"]["password"] = password;
     fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
@@ -185,15 +187,40 @@ function askQuestion(query) {
 }
 
 async function createData(force = false) {
+    if (!fs.existsSync("./data.json") || force == true) {
+        await askForLanguage();
+    }
+}
+
+async function askForLanguage() {
     const defaultData = {
         account: {
             username: null,
             password: null
         },
         cookies: null,
+        language: "en-US",
     }
-    if (!fs.existsSync("./data.json") || force == true) {
-        fs.writeFileSync("./data.json", JSON.stringify(defaultData, null, "\t"));
+    const language = await askQuestion(`${color.FgYellow}English: ${color.FgGreen}1\n${color.FgYellow}繁體中文: ${color.FgGreen}2\n${color.FgYellow}简体中文: ${color.FgGreen}3\n${color.Reset}${Language["select"]}`);
+    switch (language) {
+        case "1":
+            defaultData["language"] = "en-US"
+            Language = languageFile["en-US"];
+            fs.writeFileSync("./data.json", JSON.stringify(defaultData, null, "\t"));
+            break;
+        case "2":
+            defaultData["language"] = "zh-TW"
+            Language = languageFile["zh-TW"];
+            fs.writeFileSync("./data.json", JSON.stringify(defaultData, null, "\t"));
+            break;
+        case "3":
+            defaultData["language"] = "zh-CN"
+            Language = languageFile["zh-CN"];
+            fs.writeFileSync("./data.json", JSON.stringify(defaultData, null, "\t"));
+            break;
+        default:
+            await askForLanguage();
+            break;
     }
 }
 
