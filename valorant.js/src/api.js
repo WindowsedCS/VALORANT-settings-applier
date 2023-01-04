@@ -178,9 +178,10 @@ class API {
                     this.multifactor = true;
                     return;
                 }
-
-                // check for error
-                if (response.data.errorCode) {
+                // if (response.data?.error === "auth_failure") {
+                //     throw new Error("auth_failure: username or password is incorrect.");
+                // } else
+                 if (response.data.errorCode) {
                     throw new Error(response.data.errorCode);
                 } else if (response.data.error) {
                     throw new Error(response.data.error);

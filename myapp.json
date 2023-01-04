@@ -1,0 +1,18 @@
+{
+    "pkg": {
+        "targets": [
+            "node16-win-x64"
+        ],
+        "outputPath": "dist"
+    },
+    "pkg_fetch_version": "3.4",
+    "node_version": "16.16.0",
+    "pkg_cache_path": ".pkg-cache",
+    "icon": "icon.ico",
+    "name": "vsa - VALORANT Settings Applier",
+    "description": "A one-click application for quick applying your VALORANT settings to different accounts",
+    "company": "WindowsedCS",
+    "version": "1.0.0",
+    "copyright": "WindowsedCS Team",
+    "file": "./build/index.cjs"
+}

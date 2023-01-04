@@ -108,3 +108,8 @@ build/
 cookies/
 profiles/
 data.json
+
+# Pkg cache
+.pkg-cache
+
+dist/

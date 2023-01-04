@@ -11,6 +11,7 @@
         "profileAvailable": "Following profiles are available to apply",
         "profileNotExist": "The profile does not exist!",
         "nameProfile": "Please name this settings profile: ",
+        "WRONG_USERNAMEORPASSWORD": "Username or Password is incorrect.",
         "replaceWarning": "Profile {{name}} exists, are you sure you want to replace it? (y/n): "
     },
     "zh-TW": {
@@ -25,6 +26,7 @@
         "profileAvailable": "以下存檔可用於套用：",
         "profileNotExist": "此存檔並不存在：",
         "nameProfile": "請為此存檔命名：",
+        "WRONG_USERNAMEORPASSWORD": "用戶名或密碼不正確.",
         "replaceWarning": "存檔 {{name}} 已存在，您確定要複寫它嗎？(y/n)："
     },
     "zh-CN": {
@@ -39,6 +41,7 @@
         "profileAvailable": "以下存档可用于套用：",
         "profileNotExist": "此存档并不存在：",
         "nameProfile": "请为此存档命名：",
+        "WRONG_USERNAMEORPASSWORD": "用户名或密码不正确",
         "replaceWarning": "存档 {{name}} 已存在，您确定要复写它吗？(y/n)："
     }
 }
