@@ -1,4 +1,6 @@
 const inquirer = require("inquirer");
+const MaxLengthInputPrompt = require('inquirer-maxlength-input-prompt')
+
 class ConfigManager {
 
     constructor() {
@@ -80,6 +82,7 @@ class ConfigManager {
             const aMFA = await inquirer.prompt({
                 name: "mfa",
                 type: "input",
+                maxLength: 6,
                 message: this.Language["askForMfaCode"],
                 default() {
                     return null;
@@ -104,8 +107,8 @@ class ConfigManager {
                     message: this.Language["select"],
                     choices: [
                         {
-                            name: this.Language["loggedInAs"],
-                            disabled: `${playername} (${username})`
+                            name: `${this.Language["loggedInAs"]}${playername}`,
+                            disabled: username
                         },
                         {
                             name: this.Language["changeAccount"],
@@ -191,7 +194,7 @@ class ConfigManager {
                 {
                     type: 'input',
                     name: 'name',
-                    message: `${this.Language["profileAvailable"]}`,
+                    message: `${this.Language["nameProfile"]}`,
                     default() {
                         return null;
                     },
