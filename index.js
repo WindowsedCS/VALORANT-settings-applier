@@ -42,13 +42,11 @@ async function main() {
                     fs.writeFileSync(`./cookies/${valorant.username}.json`, JSON.stringify(valorant.cookies, null, "\t"));
                     fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
                 }
-            })
-                .catch((err) => {
-                    // console.log(Language["WRONG_USERNAMEORPASSWORD"])
-                    process.stdout.write(Language["WRONG_USERNAMEORPASSWORD"])
-                    process.stdin.resume();
-
-                });
+            }).catch((err) => {
+                console.log(err);
+                process.stdout.write(Language["WRONG_USERNAMEORPASSWORD"])
+                process.stdin.resume();
+            });
         } else if (data["cookies"]) {
             await valorant.reAuthorize(data["cookies"]).catch(async (error) => {
                 console.log(error.message);
@@ -83,9 +81,9 @@ async function nameSettings(settings) {
     await ConfigManager.askForNameProfile();
     const name = ConfigManager.getName();
     if (fs.existsSync(`./profiles/${name}.json`)) {
-        await ConfigManager.askForReplace()
+        await ConfigManager.askForReplace(name);
         const replace = ConfigManager.getReplace();
-        if (replace.toLowerCase() == "y" || replace.toLowerCase() == "yes") {
+        if (replace == true) {
             fs.writeFileSync(`./profiles/${name}.json`, JSON.stringify(settings, null, "\t"));
         } else {
             await nameSettings(settings);
@@ -137,15 +135,10 @@ async function askForSelection(valorant = new VALORANT.API()) {
                         fs.writeFileSync(`./cookies/${valorant.username}.json`, JSON.stringify(valorant.cookies, null, "\t"));
                         fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
                     }
-                })
-                    .catch((err) => {
-                        // console.log(err)
-                        // console.log(Language["WRONG_USERNAMEORPASSWORD"])
-                        process.stdout.write(Language["WRONG_USERNAMEORPASSWORD"])
-                        process.stdin.resume();
-
-                        // console.log(error.response);
-                    });
+                }).catch((err) => {
+                    process.stdout.write(Language["WRONG_USERNAMEORPASSWORD"])
+                    process.stdin.resume();
+                });
             }
             if (valorant.user_id) {
                 const playerData = (await valorant.getPlayers([valorant.user_id])).data;
