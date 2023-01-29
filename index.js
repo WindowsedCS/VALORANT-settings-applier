@@ -106,19 +106,24 @@ async function askForSelection(valorant = new VALORANT.API()) {
             data["account"]["password"] = null;
             await ConfigManager.Setup();
 
-            if (fs.existsSync(`./cookies/${data["account"]["username"]}.json`)) {
-                let cookie = fs.readFileSync(`./cookies/${data["account"]["username"]}.json`, "utf8");
+            username = ConfigManager.getUsername();
+            password = ConfigManager.getPassword();
+
+            if (fs.existsSync(`./cookies/${username}.json`)) {
+                let cookie = fs.readFileSync(`./cookies/${username}.json`, "utf8");
                 cookie = JSON.parse(cookie);
-                data["cookies"] = cookie;
-                fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
-                await valorant.reAuthorize(data["cookies"]).catch(async (error) => {
+                await valorant.reAuthorize(cookie).then(async () => {
+                    data["cookies"] = cookie;
+                    data["account"]["username"] = username;
+                    data["account"]["password"] = password;
+                }).catch(async (error) => {
                     console.log(error.message);
                     data["cookies"] = null
-                    fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
                 });
+                fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
             } else {
-                username = ConfigManager.getUsername()
-                password = ConfigManager.getPassword()
+                username = ConfigManager.getUsername();
+                password = ConfigManager.getPassword();
 
 
                 await valorant.authorize(username, password).then(async (error) => {
