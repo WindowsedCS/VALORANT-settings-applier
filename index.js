@@ -42,11 +42,13 @@ async function main() {
                     fs.writeFileSync(`./cookies/${valorant.username}.json`, JSON.stringify(valorant.cookies, null, "\t"));
                     fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
                 }
-            }).catch((err) => {
-                console.log(err);
-                process.stdout.write(Language["WRONG_USERNAMEORPASSWORD"])
-                process.stdin.resume();
-            });
+            })
+                .catch((err) => {
+                    // console.log(Language["WRONG_USERNAMEORPASSWORD"])
+                    process.stdout.write(Language["WRONG_USERNAMEORPASSWORD"])
+                    process.stdin.resume();
+
+                });
         } else if (data["cookies"]) {
             await valorant.reAuthorize(data["cookies"]).catch(async (error) => {
                 console.log(error.message);
@@ -81,9 +83,9 @@ async function nameSettings(settings) {
     await ConfigManager.askForNameProfile();
     const name = ConfigManager.getName();
     if (fs.existsSync(`./profiles/${name}.json`)) {
-        await ConfigManager.askForReplace(name);
+        await ConfigManager.askForReplace()
         const replace = ConfigManager.getReplace();
-        if (replace == true) {
+        if (replace.toLowerCase() == "y" || replace.toLowerCase() == "yes") {
             fs.writeFileSync(`./profiles/${name}.json`, JSON.stringify(settings, null, "\t"));
         } else {
             await nameSettings(settings);
@@ -106,24 +108,19 @@ async function askForSelection(valorant = new VALORANT.API()) {
             data["account"]["password"] = null;
             await ConfigManager.Setup();
 
-            username = ConfigManager.getUsername();
-            password = ConfigManager.getPassword();
-
-            if (fs.existsSync(`./cookies/${username}.json`)) {
-                let cookie = fs.readFileSync(`./cookies/${username}.json`, "utf8");
+            if (fs.existsSync(`./cookies/${data["account"]["username"]}.json`)) {
+                let cookie = fs.readFileSync(`./cookies/${data["account"]["username"]}.json`, "utf8");
                 cookie = JSON.parse(cookie);
-                await valorant.reAuthorize(cookie).then(async () => {
-                    data["cookies"] = cookie;
-                    data["account"]["username"] = username;
-                    data["account"]["password"] = password;
-                }).catch(async (error) => {
+                data["cookies"] = cookie;
+                fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
+                await valorant.reAuthorize(data["cookies"]).catch(async (error) => {
                     console.log(error.message);
                     data["cookies"] = null
+                    fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
                 });
-                fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
             } else {
-                username = ConfigManager.getUsername();
-                password = ConfigManager.getPassword();
+                username = ConfigManager.getUsername()
+                password = ConfigManager.getPassword()
 
 
                 await valorant.authorize(username, password).then(async (error) => {
@@ -140,10 +137,15 @@ async function askForSelection(valorant = new VALORANT.API()) {
                         fs.writeFileSync(`./cookies/${valorant.username}.json`, JSON.stringify(valorant.cookies, null, "\t"));
                         fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
                     }
-                }).catch((err) => {
-                    process.stdout.write(Language["WRONG_USERNAMEORPASSWORD"])
-                    process.stdin.resume();
-                });
+                })
+                    .catch((err) => {
+                        // console.log(err)
+                        // console.log(Language["WRONG_USERNAMEORPASSWORD"])
+                        process.stdout.write(Language["WRONG_USERNAMEORPASSWORD"])
+                        process.stdin.resume();
+
+                        // console.log(error.response);
+                    });
             }
             if (valorant.user_id) {
                 const playerData = (await valorant.getPlayers([valorant.user_id])).data;

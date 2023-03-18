@@ -1,14 +1,8 @@
 "use strict";
-
 const axios = require('axios').default;
-const axiosCookieJarSupport = require('axios-cookiejar-support').default;
 const querystring = require('querystring');
 const tough = require('tough-cookie');
-const fs = require("fs");
-const path = require("path");
 const url = require('url');
-const https = require("https");
-axiosCookieJarSupport(axios);
 const { Agent } = require("https");
 const ciphers = [
     'TLS_CHACHA20_POLY1305_SHA256',
@@ -18,11 +12,20 @@ const ciphers = [
 ];
 const regions = require("./regions");
 
+const stringifyCookies = (cookies) => {
+    const cookieList = [];
+    for (let [key, value] of Object.entries(cookies)) {
+        cookieList.push(key + "=" + value);
+    }
+    return cookieList.join("; ");
+}
+
+
 const httpAgent = new Agent({ ciphers: ciphers.join(':'), honorCipherOrder: true, minVersion: 'TLSv1.2' })
 
 class API {
 
-    constructor(region = regions.AsiaPacific, client_version = "release-04.11-9-720764") {
+    constructor(region = regions.AsiaPacific, client_version = "release-06.05-shipping-11-843632") {
         this.region = region;
         this.username = null;
         this.user_id = null;
@@ -88,10 +91,10 @@ class API {
             "scope": "account openid link ban lol_region"
         }, {
             headers: {
-                'Cookie': `ssid=${cookies.ssid}`,
+                'Cookie': stringifyCookies(cookies),
                 'User-Agent': this.user_agent
             },
-            jar: this.cookieJar,
+
             withCredentials: true,
             httpsAgent: httpAgent,
         }).then((response) => {
@@ -111,7 +114,7 @@ class API {
             return parts.access_token;
         }).then((access_token) => {
             return axios.post('https://entitlements.auth.riotgames.com/api/token/v1', {}, {
-                jar: this.cookieJar,
+
                 withCredentials: true,
                 headers: {
                     'Authorization': `Bearer ${access_token}`,
@@ -123,7 +126,7 @@ class API {
             })
         }).then(() => {
             return axios.post('https://auth.riotgames.com/userinfo', {}, {
-                jar: this.cookieJar,
+
                 withCredentials: true,
                 headers: {
                     'Authorization': `Bearer ${this.access_token}`,
@@ -150,7 +153,7 @@ class API {
             headers: {
                 'User-Agent': this.user_agent
             },
-            jar: this.cookieJar,
+
             withCredentials: true,
             httpsAgent: httpAgent,
         }).then((res) => {
@@ -163,7 +166,7 @@ class API {
                 headers: {
                     'User-Agent': this.user_agent
                 },
-                jar: this.cookieJar,
+
                 httpsAgent: httpAgent,
                 withCredentials: true,
             }).then((response) => {
@@ -181,7 +184,7 @@ class API {
                 // if (response.data?.error === "auth_failure") {
                 //     throw new Error("auth_failure: username or password is incorrect.");
                 // } else
-                 if (response.data.errorCode) {
+                if (response.data.errorCode) {
                     throw new Error(response.data.errorCode);
                 } else if (response.data.error) {
                     throw new Error(response.data.error);
@@ -202,7 +205,7 @@ class API {
             // console.log(this.cookies)
             if (this.multifactor === true) return;
             return axios.post('https://entitlements.auth.riotgames.com/api/token/v1', {}, {
-                jar: this.cookieJar,
+
                 withCredentials: true,
                 headers: {
                     'Authorization': `Bearer ${access_token}`,
@@ -215,7 +218,7 @@ class API {
         }).then(() => {
             if (this.multifactor === true) return;
             return axios.post('https://auth.riotgames.com/userinfo', {}, {
-                jar: this.cookieJar,
+
                 withCredentials: true,
                 headers: {
                     'Authorization': `Bearer ${this.access_token}`,
@@ -236,7 +239,6 @@ class API {
             'rememberDevice': true,
             'type': 'multifactor',
         }, {
-            jar: this.cookieJar,
             headers: {
                 'User-Agent': this.user_agent
             },
@@ -254,7 +256,6 @@ class API {
                 throw new Error(response.data.errorCode);
             } else if (response.data.error) {
                 throw new Error(response.data.error);
-
             }
             // parse uri
             var parsedUrl = url.parse(response.data.response.parameters.uri);
@@ -271,7 +272,6 @@ class API {
             this.access_token = parts.access_token;
         }).then(() => {
             return axios.post('https://entitlements.auth.riotgames.com/api/token/v1', {}, {
-                jar: this.cookieJar,
                 withCredentials: true,
                 headers: {
                     'Authorization': `Bearer ${this.access_token}`,
@@ -281,7 +281,6 @@ class API {
             });
         }).then(() => {
             return axios.post('https://auth.riotgames.com/userinfo', {}, {
-                jar: this.cookieJar,
                 withCredentials: true,
                 httpsAgent: httpAgent,
                 headers: {
@@ -326,40 +325,6 @@ class API {
         })
     }
 
-    async getPurchaseHistory() {
-        if (this.ssid == null) {
-            return axios.get('https://login.playersupport.riotgames.com/login?brand_id=360004106774&locale_id=1&return_to=https://support-valorant.riotgames.com/hc/en-us/articles/360045132434-Checking-Your-Purchase-History-', {
-                jar: this.cookieJar,
-                withCredentials: true,
-                httpsAgent: httpAgent,
-            }).catch(async (response) => {
-                return axios.get('https://sspd.playersupport.riotgames.com/valorant_purchase_history', {
-                    jar: this.cookieJar,
-                    withCredentials: true,
-                    httpsAgent: httpAgent,
-                })
-            })
-        } else {
-            return axios.get('https://login.playersupport.riotgames.com/login?brand_id=360004106774&locale_id=1&return_to=https://support-valorant.riotgames.com/hc/en-us/articles/360045132434-Checking-Your-Purchase-History-', {
-                jar: this.cookieJar,
-                withCredentials: true,
-                httpsAgent: httpAgent,
-                headers: {
-                    cookie: `ssid=${this.ssid};`
-                },
-            }).catch(async (response) => {
-                return axios.get('https://sspd.playersupport.riotgames.com/valorant_purchase_history', {
-                    jar: this.cookieJar,
-                    withCredentials: true,
-                    httpsAgent: httpAgent,
-                    headers: {
-                        cookie: `ssid=${this.ssid};`
-                    },
-                })
-            })
-        }
-    }
-
     getContent() {
         return axios.get(this.getSharedDataServiceUrl(this.region) + '/content-service/v3/content', {
             headers: this.generateRequestHeaders(),
@@ -389,7 +354,7 @@ class API {
     }
 
     getClientVersion() {
-        return axios.get("https://api.empressival.com/version").then((response) => {
+        return axios.get("https://valorant-api.com/v1/version").then((response) => {
             this.client_version = (response.data.data.riotClientVersion).replace("=shipping", "");
             this.user_agent = `RiotClient/${response.data.data.riotClientBuild} rso-auth (Windows;10;;Professional, x64)`;
         })

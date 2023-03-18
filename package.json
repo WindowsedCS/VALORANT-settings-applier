@@ -1,6 +1,6 @@
 {
   "name": "valorant-settings-applier",
-  "version": "1.0.2",
+  "version": "1.0.4",
   "description": "Quickly apply your in-game settings profiles to different accounts!",
   "main": "index.js",
   "scripts": {
