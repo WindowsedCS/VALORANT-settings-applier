@@ -32,8 +32,8 @@ async function main() {
                 data["cookies"] = valorant.cookies;
                 if (valorant.multifactor == true) {
                     await ConfigManager.askForMfa()
-                    const code = ConfigManager.getMfa();
-                    await valorant.mfa(code);
+                    const code = await ConfigManager.getMfa()
+                    await valorant.mfa(code, valorant.cookies)
                     data["cookies"] = valorant.cookies;
                 }
                 if (valorant.user_id) {
@@ -44,14 +44,22 @@ async function main() {
                 }
             })
                 .catch((err) => {
-                    // console.log(Language["WRONG_USERNAMEORPASSWORD"])
-                    process.stdout.write(Language["WRONG_USERNAMEORPASSWORD"])
+                    let message;
+                    switch (err.message) {
+                        case "auth_failure":
+                            message = Language["WRONG_USERNAMEORPASSWORD"]
+                            break;
+                        case "multifactor_attempt_failed":
+                            message = Language["WRONG_MFA"]
+                        default:
+                            message = Language["ANOTHER_ERROR"] + " " + err.toString()
+                    }
+                    process.stdout.write(message.toString())
                     process.stdin.resume();
 
                 });
         } else if (data["cookies"]) {
             await valorant.reAuthorize(data["cookies"]).catch(async (error) => {
-                console.log(error.message);
                 data["cookies"] = null
                 fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
             });
@@ -114,7 +122,6 @@ async function askForSelection(valorant = new VALORANT.API()) {
                 data["cookies"] = cookie;
                 fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
                 await valorant.reAuthorize(data["cookies"]).catch(async (error) => {
-                    console.log(error.message);
                     data["cookies"] = null
                     fs.writeFileSync("./data.json", JSON.stringify(data, null, "\t"));
                 });
@@ -127,8 +134,8 @@ async function askForSelection(valorant = new VALORANT.API()) {
                     data["cookies"] = valorant.cookies;
                     if (valorant.multifactor == true) {
                         await ConfigManager.askForMfa()
-                        const code = ConfigManager.getMfa();
-                        await valorant.mfa(code);
+                        const code = await ConfigManager.getMfa()
+                        await valorant.mfa(code, valorant.cookies)
                         data["cookies"] = valorant.cookies;
                     }
                     if (valorant.user_id) {
@@ -139,12 +146,18 @@ async function askForSelection(valorant = new VALORANT.API()) {
                     }
                 })
                     .catch((err) => {
-                        // console.log(err)
-                        // console.log(Language["WRONG_USERNAMEORPASSWORD"])
-                        process.stdout.write(Language["WRONG_USERNAMEORPASSWORD"])
+                        let message;
+                        switch (err.stack) {
+                            case "auth_failure":
+                                message = Language["WRONG_USERNAMEORPASSWORD"]
+                                break;
+                            case "multifactor_attempt_failed":
+                                message = Language["WRONG_MFA"]
+                            default:
+                                message = Language["ANOTHER_ERROR"] + " " + err.message.toString()
+                        }
+                        process.stdout.write(message.toString())
                         process.stdin.resume();
-
-                        // console.log(error.response);
                     });
             }
             if (valorant.user_id) {
@@ -165,6 +178,7 @@ async function askForSelection(valorant = new VALORANT.API()) {
             break;
         case "3":
             console.log(`${color.FgYellow}${Language["applySettings"]}`)
+            console.log(color.BgWhite)
             let profileList = [];
             if (!fs.existsSync("./profiles")) {
                 fs.mkdirSync("./profiles");

@@ -12,7 +12,7 @@
     "name": "vsa - VALORANT Settings Applier",
     "description": "A one-click application for quick applying your VALORANT settings to different accounts",
     "company": "WindowsedCS",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "copyright": "WindowsedCS Team",
     "file": "./build/index.cjs"
 }

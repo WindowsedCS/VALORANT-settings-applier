@@ -21,8 +21,21 @@ const stringifyCookies = (cookies) => {
 }
 
 
-const httpAgent = new Agent({ ciphers: ciphers.join(':'), honorCipherOrder: true, minVersion: 'TLSv1.2' })
+const httpAgent = new Agent({ ciphers: ciphers.join(':'), honorCipherOrder: true, minVersion: 'TLSv1.3' })
+const parseSetCookie = (setCookie) => {
+    if (!setCookie) {
+        console.error("Riot didn't return any cookies during the auth request! Cloudflare might have something to do with it...");
+        return {};
+    }
 
+    const cookies = {};
+    for (const cookie of setCookie) {
+        const sep = cookie.indexOf("=");
+        cookies[cookie.slice(0, sep)] = cookie.slice(sep + 1, cookie.indexOf(';'));
+    }
+    return cookies;
+}
+let lastCookies = null;
 class API {
 
     constructor(region = regions.AsiaPacific, client_version = "release-06.05-shipping-11-843632") {
@@ -37,7 +50,6 @@ class API {
         this.client_version = client_version.replace("=shipping", "");
         this.cookies = null;
         this.user_agent = null;
-        this.ssid = null;
         this.client_platform = {
             "platformType": "PC",
             "platformOS": "Windows",
@@ -153,10 +165,12 @@ class API {
             headers: {
                 'User-Agent': this.user_agent
             },
-
             withCredentials: true,
             httpsAgent: httpAgent,
         }).then((res) => {
+            let cookies = parseSetCookie(res.headers["set-cookie"]);
+            lastCookies = res.headers["set-cookie"];
+            this.cookies = cookies;
             return axios.put('https://auth.riotgames.com/api/v1/authorization', {
                 'type': 'auth',
                 'username': username,
@@ -164,12 +178,13 @@ class API {
                 "remember": true
             }, {
                 headers: {
-                    'User-Agent': this.user_agent
+                    'User-Agent': this.user_agent,
+                    cookie: stringifyCookies(cookies)
                 },
-
                 httpsAgent: httpAgent,
                 withCredentials: true,
             }).then((response) => {
+                lastCookies = response.headers["set-cookie"];
                 let cooked = {};
                 response.headers["set-cookie"].forEach((cookie) => {
                     let split = cookie.split("=");
@@ -181,9 +196,6 @@ class API {
                     this.multifactor = true;
                     return;
                 }
-                // if (response.data?.error === "auth_failure") {
-                //     throw new Error("auth_failure: username or password is incorrect.");
-                // } else
                 if (response.data.errorCode) {
                     throw new Error(response.data.errorCode);
                 } else if (response.data.error) {
@@ -231,7 +243,7 @@ class API {
         })
     }
 
-    mfa(code) {
+    async mfa(code, cookies) {
         let ms = new Date();
         ms.setDate(ms.getDate() + 30);
         return axios.put('https://auth.riotgames.com/api/v1/authorization', {
@@ -240,7 +252,8 @@ class API {
             'type': 'multifactor',
         }, {
             headers: {
-                'User-Agent': this.user_agent
+                'User-Agent': this.user_agent,
+                cookie: stringifyCookies(cookies)
             },
             withCredentials: true,
             httpsAgent: httpAgent,
@@ -298,32 +311,6 @@ class API {
         return axios.get(this.getSharedDataServiceUrl(region) + '/v1/config/' + region);
     }
 
-    getRegion() {
-        let cookieJar = new tough.CookieJar();
-        return axios.post('https://auth.riotgames.com/api/v1/authorization', {
-            'client_id': 'play-valorant-web-prod',
-            'nonce': '1',
-            'redirect_uri': 'https://playvalorant.com/opt_in',
-            'response_type': 'token id_token',
-            "scope": "account openid"
-        }, {
-            headers: {
-                'User-Agent': this.user_agent
-            },
-            jar: cookieJar,
-            httpsAgent: httpAgent,
-        }).then((res) => {
-            return axios.put('https://riot-geo.pas.si.riotgames.com/pas/v1/product/valorant', {
-                "id_token": this.id_token,
-            }, {
-                headers: {
-                    'Authorization': `Bearer ${this.access_token}`
-                },
-                jar: cookieJar,
-                httpsAgent: httpAgent,
-            });
-        })
-    }
 
     getContent() {
         return axios.get(this.getSharedDataServiceUrl(this.region) + '/content-service/v3/content', {
